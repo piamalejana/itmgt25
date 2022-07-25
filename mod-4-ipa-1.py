@@ -49,7 +49,7 @@ def relationship_status(from_member, to_member, social_graph):
     elif to_member in from_member_ff:
         return("follower")
     elif from_member in to_member_ff:
-        return("followed")
+        return("followed by")
     else:
         return("no relationship")
 
@@ -139,7 +139,7 @@ def eta(first_stop, second_stop, route_map):
     '''
     # Replace `pass` with your code. 
     # Stay within the function. Only use the parameters as input. The function should return your answer.
-    routes = legs.keys()
+    routes = route_map.keys()
     
     a = [i for i,j in enumerate(routes)]
     b = [j for i,j in enumerate(routes)]
