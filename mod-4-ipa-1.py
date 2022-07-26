@@ -152,7 +152,7 @@ def eta(first_stop, second_stop, route_map):
         if x == first_stop:
             while(True):
                 if d[m] != second_stop:
-                    first_stop_time = int(legs[c[m],d[m]]['travel_time_mins'])
+                    first_stop_time = int(route_map[c[m],d[m]]['travel_time_mins'])
                     time += first_stop_time 
                     if m == len(c) - 1:
                         m = 0
@@ -160,5 +160,5 @@ def eta(first_stop, second_stop, route_map):
                         m += 1
                     continue
                 elif d[m] == second_stop:
-                    second_stop_time = int(legs[c[m],d[m]]['travel_time_mins'])
+                    second_stop_time = int(route_map[c[m],d[m]]['travel_time_mins'])
                     return time + second_stop_time
