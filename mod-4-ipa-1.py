@@ -53,7 +53,6 @@ def relationship_status(from_member, to_member, social_graph):
     else:
         return("no relationship")
 
-
 def tic_tac_toe(board):
     '''Tic Tac Toe. 
     25 points.
