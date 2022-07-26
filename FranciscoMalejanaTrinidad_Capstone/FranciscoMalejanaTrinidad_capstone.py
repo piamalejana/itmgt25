@@ -54,22 +54,6 @@ df['1w % change'] = round((((df[str(end_date)] - df[str(start_date)]) / df[str(s
 df['currency name'] = json_normalize(dict1['symbols']).transpose()
 df['country'] = dict2.values()
 
-bot = telebot.TeleBot("5402039692:AAFPg1QDAb4MwzVEGsD_KbV5p5yNsvEFVMk")
-
-# INSERT INTRO HERE - includes what currencies they want updates on (base currency PHP)
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.send_message(message.chat.id,emoji.emojize("Hi! Juan Peso at your service.:man: I'm here to give you the latest currency updates.:money_bag:\n \n Press :chart_increasing:UPDATE:chart_increasing: if you need updates with the current currency exchange.\n\nPress :money_with_wings:CONVERTER:money_with_wings: if you want to manually convert PHP to another currency\n\nPress :world_map:GENERATE CURRENCY CODE:world_map: if you do not know your country\'s currency code\n\nLastly, press :calendar:SCHEDULE UPDATE:calendar: if you want to be updated with regards to currency exchange"), reply_markup=markup())
-
-def markup():
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(InlineKeyboardButton(emoji.emojize(":chart_increasing:UPDATE:chart_increasing:"), callback_data="update"),
-             InlineKeyboardButton(emoji.emojize(":money_with_wings:CONVERTER:money_with_wings:"), callback_data="converter"),
-             InlineKeyboardButton(emoji.emojize(":world_map:GENERATE CURRENCY CODE:world_map:"), callback_data="generate"),
-             InlineKeyboardButton(emoji.emojize(":calendar:SCHEDULE UPDATE:calendar:"), callback_data="schedule"))
-    return markup
-
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     
@@ -148,14 +132,14 @@ def callback_query(call):
                 
     #IF USER CHOSE SCHEDULE
     elif call.data == "schedule":
-        # SET CURRENCY FOR DAILY UPDATES (storing their message)
         bot.send_message(call.message.chat.id,"Okay Sure! Type /set to get started!")
         # CREATING STORAGE
         columns = ['ID', 'currency code']
         with open('code.csv', 'w') as f:
             writer = csv.writer(f)
             writer.writerow(columns)
-        
+            
+        # SET CURRENCY FOR DAILY UPDATES (storing their message)
         @bot.message_handler(commands=['set'])
         def set_daily_updates(message):
             sent = bot.send_message(call.message.chat.id,"Send me the code of the currency you want to get daily updates on (example: 'USD')")
@@ -174,26 +158,24 @@ def callback_query(call):
             else:
                 bot.send_message(message.chat.id,"Sorry, we don't have this data. Try scheduling another one.")
           
-        # SCHEDULE THE UPDATES
-        @bot.callback_query_handler(func=lambda call: True)
-        def update_callback(call):
-            if call.data == 'yes':
-                sched = BlockingScheduler()
-                bot.send_message(call.message.chat.id, f"You're scheduled. See you!")
-                
-                storage = pd.read_csv('code.csv').groupby('ID')['currency code'].apply(' '.join).reset_index()
-                storage['updated code'] = storage['currency code'].str[-3:]
-                code = list(storage.loc[storage['ID'] == call.message.chat.id,'updated code'])[0]
-                
-                def send_update():
-                    data = list(df.loc[code])
-                    print(data)
-                    bot.send_message(call.message.chat.id,f"Hello! Here's your update for the day:\nCURRENCY: {data[7]}\nCOUNTRY: {data[8]}\nRATE: {data[2]}\n1D CHANGE: {data[5]}%\n1W CHANGE: {data[6]}%")
-                
-                sched.add_job(send_update, trigger="cron", hour=22.25, id='job_id')
-                sched.start()
-                
-            elif call.data == 'no':
-                bot.send_message(call.message.chat.id, "Oh okay! Have a nice day!")
-                
+    # SCHEDULE THE UPDATES
+    elif call.data == 'yes':
+        bot.send_message(call.message.chat.id, f"You're scheduled. See you!")
+        sched = BlockingScheduler()
+        
+        storage = pd.read_csv('code.csv').groupby('ID')['currency code'].apply(' '.join).reset_index()
+        storage['updated code'] = storage['currency code'].str[-3:]
+        code = list(storage.loc[storage['ID'] == call.message.chat.id,'updated code'])[0]
+
+        def send_update():
+            data = list(df.loc[code])
+            print(data)
+            bot.send_message(call.message.chat.id,f"Hello! Here's your update for the day:\nCURRENCY: {data[7]}\nCOUNTRY: {data[8]}\nRATE: {data[2]}\n1D CHANGE: {data[5]}%\n1W CHANGE: {data[6]}%")
+
+        sched.add_job(send_update, trigger="cron", hour=13, id='job_id')
+        sched.start()
+
+    elif call.data == 'no':
+        bot.send_message(call.message.chat.id, "Oh okay! Have a nice day!")
+
 bot.polling()
